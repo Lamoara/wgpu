@@ -599,11 +599,17 @@ pub struct BindGroup {
 
 impl crate::DynBindGroup for BindGroup {}
 
+#[derive(Debug)]
+pub enum Shader {
+    Naga(crate::NagaShader),
+    Glsl(glow::NativeShader),
+}
+
 type ShaderId = u32;
 
 #[derive(Debug)]
 pub struct ShaderModule {
-    naga: crate::NagaShader,
+    shader: Shader,
     label: Option<String>,
     id: ShaderId,
 }

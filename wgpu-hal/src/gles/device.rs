@@ -210,6 +210,12 @@ impl super::Device {
         program: glow::Program,
     ) -> Result<glow::Shader, crate::PipelineError> {
         use naga::back::glsl;
+
+        let naga = match &stage.module.shader {
+            crate::gles::Shader::Naga(naga) => naga,
+            _ => panic!("Expected Shader::Naga"),
+        };
+
         let pipeline_options = glsl::PipelineOptions {
             shader_stage: naga_stage,
             entry_point: stage.entry_point.to_owned(),
@@ -217,8 +223,8 @@ impl super::Device {
         };
 
         let (module, info) = naga::back::pipeline_constants::process_overrides(
-            &stage.module.naga.module,
-            &stage.module.naga.info,
+            &naga.module,
+            &naga.info,
             stage.constants,
         )
         .map_err(|e| {
@@ -378,15 +384,22 @@ impl super::Device {
                 push_constant_items.push(Vec::new());
                 push_constant_items.last_mut().unwrap()
             };
-            let context = CompilationContext {
-                layout,
-                sampler_map: &mut sampler_map,
-                name_binding_map: &mut name_binding_map,
-                push_constant_items: pc_item,
-                multiview,
+
+            let shader = match &stage.module.shader {
+                crate::gles::Shader::Naga(_naga_shader) => {
+                    let context = CompilationContext {
+                        layout,
+                        sampler_map: &mut sampler_map,
+                        name_binding_map: &mut name_binding_map,
+                        push_constant_items: pc_item,
+                        multiview,
+                    };
+
+                    Self::create_shader(gl, naga_stage, stage, context, program)?
+                }
+                crate::gles::Shader::Glsl(native_shader) => *native_shader,
             };
 
-            let shader = Self::create_shader(gl, naga_stage, stage, context, program)?;
             shaders_to_delete.push(shader);
         }
 
@@ -459,7 +472,12 @@ impl super::Device {
 
         for (stage_idx, stage_items) in push_constant_items.into_iter().enumerate() {
             for item in stage_items {
-                let naga_module = &shaders[stage_idx].1.module.naga.module;
+                let naga = match &shaders[stage_idx].1.module.shader {
+                    crate::gles::Shader::Naga(naga_shader) => naga_shader,
+                    crate::gles::Shader::Glsl(_) => continue,
+                };
+
+                let naga_module = &naga.module;
                 let type_inner = &naga_module.types[item.ty].inner;
 
                 let location = unsafe { gl.get_uniform_location(program, &item.access_path) };
@@ -1327,14 +1345,10 @@ impl crate::Device for super::Device {
         self.counters.shader_modules.add(1);
 
         Ok(super::ShaderModule {
-            naga: match shader {
-                crate::ShaderInput::SpirV(_) => {
-                    panic!("`Features::SPIRV_SHADER_PASSTHROUGH` is not enabled")
-                }
-                crate::ShaderInput::Msl { .. } => {
-                    panic!("`Features::MSL_SHADER_PASSTHROUGH` is not enabled")
-                }
-                crate::ShaderInput::Naga(naga) => naga,
+            shader: match shader {
+                crate::ShaderInput::Naga(naga_shader) => super::Shader::Naga(naga_shader),
+                crate::ShaderInput::Gles(native_shader) => super::Shader::Glsl(native_shader),
+                _ => panic!("Shader format not suported"),
             },
             label: desc.label.map(|str| str.to_string()),
             id: self.shared.next_shader_id.fetch_add(1, Ordering::Relaxed),

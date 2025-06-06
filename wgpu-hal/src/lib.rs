@@ -2104,6 +2104,7 @@ pub enum ShaderInput<'a> {
         num_workgroups: (u32, u32, u32),
     },
     SpirV(&'a [u32]),
+    Gles(glow::NativeShader),
 }
 
 pub struct ShaderModuleDescriptor<'a> {

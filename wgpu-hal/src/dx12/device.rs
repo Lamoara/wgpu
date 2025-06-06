@@ -1642,6 +1642,9 @@ impl crate::Device for super::Device {
             crate::ShaderInput::Msl { .. } => {
                 panic!("MSL_SHADER_PASSTHROUGH is not enabled for this backend")
             }
+            crate::ShaderInput::Gles(_) => {
+                panic!("GLES_SHADER_PASSTHROUGH is not enabled for this backend")
+            }
         }
     }
     unsafe fn destroy_shader_module(&self, _module: super::ShaderModule) {
