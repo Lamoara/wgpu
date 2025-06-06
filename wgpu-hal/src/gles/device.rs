@@ -1346,6 +1346,12 @@ impl crate::Device for super::Device {
     ) -> Result<super::ShaderModule, crate::ShaderError> {
         self.counters.shader_modules.add(1);
 
+        match &shader {
+                crate::ShaderInput::Naga(_) => println!("!!!!!!Shader module is Naga"),
+                crate::ShaderInput::Gles(_) => println!("!!!!!!Shader module is Gles"),
+                _ => panic!("Shader format not suported"),
+        }
+
         Ok(super::ShaderModule {
             shader: match shader {
                 crate::ShaderInput::Naga(naga_shader) => super::Shader::Naga(naga_shader),
