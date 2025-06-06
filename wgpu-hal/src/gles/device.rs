@@ -211,7 +211,7 @@ impl super::Device {
     ) -> Result<glow::Shader, crate::PipelineError> {
         use naga::back::glsl;
 
-        panic!("Hola");
+        println!("{:?}", stage);
 
         let naga = match &stage.module.shader {
             crate::gles::Shader::Naga(naga) => naga,
