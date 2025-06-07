@@ -1800,6 +1800,12 @@ impl Device {
                     num_workgroups: inner.num_workgroups,
                 }
             }
+            pipeline::ShaderModuleDescriptorPassthrough::Gles(inner) => {
+                self.require_features(wgt::Features::GLES_SHADER_PASSTHROUGH)?;
+                hal::ShaderInput::Gles(
+                    NativeShader(inner.source)
+                )
+            }
         };
 
         let hal_desc = hal::ShaderModuleDescriptor {

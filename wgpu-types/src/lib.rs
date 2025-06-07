@@ -7696,6 +7696,8 @@ pub enum CreateShaderModuleDescriptorPassthrough<'a, L> {
     SpirV(ShaderModuleDescriptorSpirV<'a, L>),
     /// Passthrough for MSL source code.
     Msl(ShaderModuleDescriptorMsl<'a, L>),
+    /// Passthrough for Gles source code.
+    Gles(ShaderModuleDescriptorGles<L>),
 }
 
 impl<'a, L> CreateShaderModuleDescriptorPassthrough<'a, L> {
@@ -7721,6 +7723,12 @@ impl<'a, L> CreateShaderModuleDescriptorPassthrough<'a, L> {
                     source: inner.source.clone(),
                 })
             }
+            CreateShaderModuleDescriptorPassthrough::Gles(inner) => {
+                CreateShaderModuleDescriptorPassthrough::<'_, K>::Gles(ShaderModuleDescriptorGles { 
+                    label: fun(&inner.label), 
+                    source: inner.source.clone(), 
+                })
+            }
         }
     }
 
@@ -7729,17 +7737,21 @@ impl<'a, L> CreateShaderModuleDescriptorPassthrough<'a, L> {
         match self {
             CreateShaderModuleDescriptorPassthrough::SpirV(inner) => &inner.label,
             CreateShaderModuleDescriptorPassthrough::Msl(inner) => &inner.label,
+            CreateShaderModuleDescriptorPassthrough::Gles(inner) => &inner.label,
         }
     }
 
     #[cfg(feature = "trace")]
     /// Returns the source data for tracing purpose.
     pub fn trace_data(&self) -> &[u8] {
+        use bytemuck::bytes_of;
+
         match self {
             CreateShaderModuleDescriptorPassthrough::SpirV(inner) => {
                 bytemuck::cast_slice(&inner.source)
             }
             CreateShaderModuleDescriptorPassthrough::Msl(inner) => inner.source.as_bytes(),
+            CreateShaderModuleDescriptorPassthrough::Gles(inner) => bytes_of(&inner.source),
         }
     }
 
@@ -7749,7 +7761,7 @@ impl<'a, L> CreateShaderModuleDescriptorPassthrough<'a, L> {
         match self {
             CreateShaderModuleDescriptorPassthrough::SpirV(..) => "spv",
             CreateShaderModuleDescriptorPassthrough::Msl(..) => "msl",
-        }
+            CreateShaderModuleDescriptorPassthrough::Gles(..) => "gles",    }
     }
 }
 
@@ -7779,4 +7791,12 @@ pub struct ShaderModuleDescriptorSpirV<'a, L> {
     pub label: L,
     /// Binary SPIR-V data, in 4-byte words.
     pub source: Cow<'a, [u32]>,
+}
+
+#[derive(Debug, Clone)]
+pub struct  ShaderModuleDescriptorGles<L> {
+    /// Debug label of the shader module. This will show up in graphics debuggers for easy identification.
+    pub label: L,
+    /// TODO
+    pub source: NonZeroU32,
 }
