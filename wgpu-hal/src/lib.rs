@@ -297,7 +297,7 @@ use core::{
     borrow::Borrow,
     error::Error,
     fmt,
-    num::NonZeroU32,
+    num::{NonZero, NonZeroU32},
     ops::{Range, RangeInclusive},
     ptr::NonNull,
 };
@@ -2104,7 +2104,7 @@ pub enum ShaderInput<'a> {
         num_workgroups: (u32, u32, u32),
     },
     SpirV(&'a [u32]),
-    Gles(glow::NativeShader),
+    Gles(NonZero<u32>),
 }
 
 pub struct ShaderModuleDescriptor<'a> {

@@ -1803,7 +1803,7 @@ impl Device {
             pipeline::ShaderModuleDescriptorPassthrough::Gles(inner) => {
                 self.require_features(wgt::Features::GLES_SHADER_PASSTHROUGH)?;
                 hal::ShaderInput::Gles(
-                    NativeShader(inner.source)
+                    inner.source
                 )
             }
         };

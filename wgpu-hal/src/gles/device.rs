@@ -1355,7 +1355,7 @@ impl crate::Device for super::Device {
         Ok(super::ShaderModule {
             shader: match shader {
                 crate::ShaderInput::Naga(naga_shader) => super::Shader::Naga(naga_shader),
-                crate::ShaderInput::Gles(native_shader) => super::Shader::Glsl(native_shader),
+                crate::ShaderInput::Gles(native_shader) => super::Shader::Glsl(glow::NativeShader(native_shader)),
                 _ => panic!("Shader format not suported"),
             },
             label: desc.label.map(|str| str.to_string()),
